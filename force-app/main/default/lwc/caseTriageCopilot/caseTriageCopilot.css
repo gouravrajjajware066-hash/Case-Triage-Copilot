@@ -1,0 +1,153 @@
+/* Case Triage Copilot Styles */
+
+/* Score Badge */
+.score-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.score-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--slds-g-color-neutral-base-95);
+    border: 4px solid;
+}
+
+.score-badge .score-number {
+    font-size: 1.75rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.score-badge .score-label {
+    font-size: 0.75rem;
+    color: var(--slds-g-color-neutral-base-50);
+}
+
+/* Score colors */
+.score-low {
+    border-color: #4bca81;
+    color: #4bca81;
+}
+
+.score-medium {
+    border-color: #ffb75d;
+    color: #ffb75d;
+}
+
+.score-high {
+    border-color: #ff9a3c;
+    color: #ff9a3c;
+}
+
+.score-critical {
+    border-color: #ea001e;
+    color: #ea001e;
+}
+
+/* Priority Band Badges */
+.badge-low {
+    background-color: #4bca81 !important;
+}
+
+.badge-medium {
+    background-color: #ffb75d !important;
+}
+
+.badge-high {
+    background-color: #ff9a3c !important;
+}
+
+.badge-critical {
+    background-color: #ea001e !important;
+}
+
+/* Triage Summary Box */
+.triage-summary {
+    background-color: var(--slds-g-color-neutral-base-95);
+    min-height: 300px;
+}
+
+/* Draft Container */
+.draft-container {
+    background-color: var(--slds-g-color-neutral-base-100);
+    min-height: 300px;
+}
+
+.draft-textarea {
+    min-height: 150px;
+}
+
+/* Reasons List */
+.reasons-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.reasons-list li {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Routing Text */
+.routing-text {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+/* Email Items */
+.email-item {
+    background-color: var(--slds-g-color-neutral-base-95);
+}
+
+.email-body {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 100px;
+    overflow-y: auto;
+    font-size: 0.875rem;
+}
+
+/* Button Group */
+.slds-button-group-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Table Styles */
+.slds-table {
+    font-size: 0.8125rem;
+}
+
+/* Loading Spinner Container */
+.slds-is-relative {
+    min-height: 200px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .score-badge {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .score-badge .score-number {
+        font-size: 1.25rem;
+    }
+    
+    .slds-button-group-row {
+        flex-direction: column;
+    }
+    
+    .slds-button-group-row lightning-button {
+        width: 100%;
+    }
+}

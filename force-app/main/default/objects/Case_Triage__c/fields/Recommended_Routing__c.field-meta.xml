@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Recommended_Routing__c</fullName>
+    <label>Recommended Routing</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>L1 Support</fullName>
+                <default>false</default>
+                <label>L1 Support</label>
+            </value>
+            <value>
+                <fullName>L2 Support</fullName>
+                <default>false</default>
+                <label>L2 Support</label>
+            </value>
+            <value>
+                <fullName>Billing</fullName>
+                <default>false</default>
+                <label>Billing</label>
+            </value>
+            <value>
+                <fullName>Engineering</fullName>
+                <default>false</default>
+                <label>Engineering</label>
+            </value>
+            <value>
+                <fullName>Security</fullName>
+                <default>false</default>
+                <label>Security</label>
+            </value>
+            <value>
+                <fullName>Customer Success</fullName>
+                <default>false</default>
+                <label>Customer Success</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

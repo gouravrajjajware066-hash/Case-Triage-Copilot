@@ -1,0 +1,250 @@
+<template>
+    <lightning-card title="Case Triage Copilot" icon-name="standard:case">
+        <!-- Loading spinner for initial load -->
+        <template if:true={isLoading}>
+            <div class="slds-is-relative slds-p-around_large">
+                <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <!-- Error state -->
+            <template if:true={hasError}>
+                <div class="slds-p-around_medium">
+                    <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                        <span class="slds-assistive-text">error</span>
+                        <h2>{errorMessage}</h2>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={hasError}>
+                <div class="slds-p-around_medium">
+                    <!-- Main layout: Two columns -->
+                    <lightning-layout multiple-rows>
+                        <!-- Left Column: Triage Summary -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <div class="slds-box slds-box_small triage-summary">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">Triage Summary</h3>
+                                
+                                <!-- Priority Score -->
+                                <div class="slds-m-bottom_medium score-container">
+                                    <div class={scoreBadgeClass}>
+                                        <span class="score-number">{priorityScore}</span>
+                                        <span class="score-label">/100</span>
+                                    </div>
+                                    <lightning-badge label={priorityBand} class={bandBadgeClass}></lightning-badge>
+                                </div>
+
+                                <!-- Recommended Routing -->
+                                <div class="slds-m-bottom_small">
+                                    <p class="slds-text-title_caps slds-m-bottom_xx-small">Recommended Routing</p>
+                                    <p class="slds-text-body_regular routing-text">
+                                        <lightning-icon icon-name="utility:routing_offline" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                        {recommendedRouting}
+                                    </p>
+                                </div>
+
+                                <!-- Reasons -->
+                                <div class="slds-m-bottom_small">
+                                    <p class="slds-text-title_caps slds-m-bottom_xx-small">Analysis Reasons</p>
+                                    <template if:true={hasReasons}>
+                                        <ul class="slds-list_dotted reasons-list">
+                                            <template for:each={triageReasons} for:item="reason">
+                                                <li key={reason}>{reason}</li>
+                                            </template>
+                                        </ul>
+                                    </template>
+                                    <template if:false={hasReasons}>
+                                        <p class="slds-text-color_weak">No specific reasons identified</p>
+                                    </template>
+                                </div>
+
+                                <!-- Suggested Actions -->
+                                <template if:true={hasSuggestedActions}>
+                                    <div>
+                                        <p class="slds-text-title_caps slds-m-bottom_xx-small">Suggested Actions</p>
+                                        <ul class="slds-list_dotted">
+                                            <template for:each={suggestedActions} for:item="action">
+                                                <li key={action} class="slds-text-color_weak">{action}</li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </template>
+                            </div>
+                        </lightning-layout-item>
+
+                        <!-- Right Column: Draft Reply -->
+                        <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                            <div class="slds-box slds-box_small draft-container">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">Draft Reply</h3>
+                                
+                                <!-- AI Draft textarea -->
+                                <lightning-textarea
+                                    label="Email Draft"
+                                    value={draftText}
+                                    onchange={handleDraftChange}
+                                    placeholder="Click 'Generate Draft (AI)' to create a response..."
+                                    max-length="32000"
+                                    class="draft-textarea">
+                                </lightning-textarea>
+
+                                <!-- Draft action buttons -->
+                                <div class="slds-m-top_small slds-button-group">
+                                    <lightning-button
+                                        label="Generate Draft (AI)"
+                                        variant="brand"
+                                        onclick={handleGenerateDraft}
+                                        disabled={isGeneratingDraft}
+                                        icon-name="utility:magicwand">
+                                    </lightning-button>
+                                    <lightning-button
+                                        label="Copy"
+                                        variant="neutral"
+                                        onclick={handleCopyDraft}
+                                        disabled={isCopyDisabled}
+                                        icon-name="utility:copy">
+                                    </lightning-button>
+                                    <lightning-button
+                                        label="Save to Log"
+                                        variant="neutral"
+                                        onclick={handleSaveLog}
+                                        disabled={isSaveDisabled}
+                                        icon-name="utility:save">
+                                    </lightning-button>
+                                </div>
+
+                                <!-- AI loading indicator -->
+                                <template if:true={isGeneratingDraft}>
+                                    <div class="slds-m-top_small slds-grid slds-grid_vertical-align-center">
+                                        <lightning-spinner alternative-text="Generating..." size="small"></lightning-spinner>
+                                        <span class="slds-m-left_small">Generating AI draft...</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </lightning-layout-item>
+
+                        <!-- Bottom Row: Case Context -->
+                        <lightning-layout-item size="12" padding="around-small">
+                            <lightning-accordion allow-multiple-sections-open active-section-name={activeSections}>
+                                <!-- Recent Emails -->
+                                <lightning-accordion-section name="emails" label="Recent Emails">
+                                    <template if:true={hasEmails}>
+                                        <template for:each={recentEmails} for:item="email">
+                                            <div key={email.emailId} class="slds-box slds-box_x-small slds-m-bottom_x-small email-item">
+                                                <p class="slds-text-title_bold">{email.subject}</p>
+                                                <p class="slds-text-body_small slds-text-color_weak">
+                                                    From: {email.fromAddress} | {email.formattedDate}
+                                                    <template if:true={email.incoming}>
+                                                        <lightning-badge label="Inbound" class="slds-m-left_x-small"></lightning-badge>
+                                                    </template>
+                                                </p>
+                                                <p class="slds-m-top_xx-small email-body">{email.textBody}</p>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={hasEmails}>
+                                        <p class="slds-text-color_weak slds-p-around_small">No recent emails</p>
+                                    </template>
+                                </lightning-accordion-section>
+
+                                <!-- Recent Comments -->
+                                <lightning-accordion-section name="comments" label="Recent Comments">
+                                    <template if:true={hasComments}>
+                                        <template for:each={recentComments} for:item="comment">
+                                            <div key={comment.commentId} class="slds-box slds-box_x-small slds-m-bottom_x-small">
+                                                <p class="slds-text-body_small slds-text-color_weak">{comment.formattedDate}</p>
+                                                <p class="slds-m-top_xx-small">{comment.commentBody}</p>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={hasComments}>
+                                        <p class="slds-text-color_weak slds-p-around_small">No recent comments</p>
+                                    </template>
+                                </lightning-accordion-section>
+                            </lightning-accordion>
+                        </lightning-layout-item>
+
+                        <!-- Action Buttons -->
+                        <lightning-layout-item size="12" padding="around-small">
+                            <div class="slds-box slds-box_small">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">Quick Actions</h3>
+                                <div class="slds-button-group-row">
+                                    <lightning-button
+                                        label="Create Follow-up Task"
+                                        variant="neutral"
+                                        onclick={handleCreateTask}
+                                        disabled={isActionDisabled}
+                                        icon-name="utility:new_task">
+                                    </lightning-button>
+                                    <lightning-button
+                                        label="Escalate"
+                                        variant="destructive"
+                                        onclick={handleEscalate}
+                                        disabled={isActionDisabled}
+                                        icon-name="utility:priority">
+                                    </lightning-button>
+                                    <lightning-button
+                                        label="Update Status"
+                                        variant="neutral"
+                                        onclick={handleUpdateStatus}
+                                        disabled={isActionDisabled}
+                                        icon-name="utility:refresh">
+                                    </lightning-button>
+                                </div>
+
+                                <!-- Action loading indicator -->
+                                <template if:true={isActionInProgress}>
+                                    <div class="slds-m-top_small slds-grid slds-grid_vertical-align-center">
+                                        <lightning-spinner alternative-text="Processing..." size="small"></lightning-spinner>
+                                        <span class="slds-m-left_small">Processing action...</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </lightning-layout-item>
+
+                        <!-- Recent Triage Logs -->
+                        <lightning-layout-item size="12" padding="around-small">
+                            <div class="slds-box slds-box_small">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">Recent Triage Logs</h3>
+                                <template if:true={hasRecentLogs}>
+                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                        <thead>
+                                            <tr class="slds-line-height_reset">
+                                                <th scope="col"><div class="slds-truncate">Name</div></th>
+                                                <th scope="col"><div class="slds-truncate">Timestamp</div></th>
+                                                <th scope="col"><div class="slds-truncate">Score</div></th>
+                                                <th scope="col"><div class="slds-truncate">Band</div></th>
+                                                <th scope="col"><div class="slds-truncate">Routing</div></th>
+                                                <th scope="col"><div class="slds-truncate">AI Used</div></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={recentLogs} for:item="log">
+                                                <tr key={log.Id}>
+                                                    <td><div class="slds-truncate">{log.Name}</div></td>
+                                                    <td><div class="slds-truncate">{log.formattedTimestamp}</div></td>
+                                                    <td><div class="slds-truncate">{log.Priority_Score__c}</div></td>
+                                                    <td><div class="slds-truncate">{log.Priority_Band__c}</div></td>
+                                                    <td><div class="slds-truncate">{log.Recommended_Routing__c}</div></td>
+                                                    <td>
+                                                        <template if:true={log.AI_Used__c}>
+                                                            <lightning-icon icon-name="utility:check" size="x-small"></lightning-icon>
+                                                        </template>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </template>
+                                <template if:false={hasRecentLogs}>
+                                    <p class="slds-text-color_weak">No triage logs for this case</p>
+                                </template>
+                            </div>
+                        </lightning-layout-item>
+                    </lightning-layout>
+                </div>
+            </template>
+        </template>
+    </lightning-card>
+</template>
